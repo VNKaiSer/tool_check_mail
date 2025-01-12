@@ -1,6 +1,4 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -12,6 +10,10 @@ from selenium.webdriver.common.keys import Keys
 
 CHECK_RECOVERY_EMAIL_XPATH = '/html/body/div[1]/div[1]/div[2]/c-wiz/div/div[2]/div/div/div/form/span/section[2]/div/div/section/div/div/div/ul/li[3]/div'
 RECOVER_MAIL_ERROR_XPATH = '/html/body/div[1]/div[1]/div[2]/c-wiz/div/div[2]/div/div/div/form/span/section[3]/div/div/div/div[1]/div/div[2]/div[2]/div'
+CHECK_ROBOT_XPATH = '/html/body/div[1]/div[1]/div[2]/c-wiz/div/div[2]/div/div/div/form/span/section[1]/div/div/div'
+
+ROBOT_STRING = 'Confirm you’re not a robot'
+RECAPTCHA_STRING = 'recaptcha'
 email = "lo235536@gmail.com"
 password = "teaxa1T@16"
 recovery_email = "ryan.t.lore23@gmail.com"
@@ -63,23 +65,38 @@ def start_task():
     driver = webdriver.Chrome(options=chrome_options)
     driver.get("https://accounts.google.com/signin")
     WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.ID, 'identifierId')))
+    current_url = driver.current_url
     email_input = driver.find_element(By.ID, 'identifierId')
     time.sleep(random_time())
     email_input.send_keys(email)
-    
+    time.sleep(random_time())
     email_input.send_keys(Keys.ENTER)
     time.sleep(random_time())
+    
+    # Kiểm tra trường hợp robot
+    try:
+        WebDriverWait(driver, 3).until(
+            lambda driver: driver.current_url != current_url
+        )
+        # Lấy URL mới
+        new_url = driver.current_url 
+        print(new_url)
+        if RECAPTCHA_STRING in new_url:
+            print("Robot detected")
+            driver.quit()
+            return
+    except Exception as e:
+        print(e)
     
     WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.NAME, 'Passwd')))
     password_input = driver.find_element(By.NAME, 'Passwd')
     time.sleep(random_time())
     password_input.send_keys(password)
-    
+    time.sleep(random_time())
     password_input.send_keys(Keys.ENTER)
-    
     # Kiểm tra trường hợp nhập email khôi phục
     try:
-        WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, CHECK_RECOVERY_EMAIL_XPATH)))
+        WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, CHECK_RECOVERY_EMAIL_XPATH)))
         recovery_email_button = driver.find_element(By.XPATH, CHECK_RECOVERY_EMAIL_XPATH)
         recovery_email_button.click()
         
